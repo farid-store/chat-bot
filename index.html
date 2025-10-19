@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Market Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #3498db; /* Biru cerah */
+            --primary-dark: #2980b9;
+            --secondary-color: #2c3e50; /* Abu-abu tua */
+            --background-light: #ecf0f1; /* Abu-abu sangat muda */
+            --card-background: #ffffff;
+            --text-color: #333;
+            --border-color: #dcdcdc;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px; /* Lebih cocok untuk antarmuka chat */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        header h1 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+            font-weight: 700;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            font-size: 1em;
+            margin: 0 auto;
+        }
+
+        /* Language Switcher */
+        .language-switcher {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+        .language-switcher button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.3s ease;
+        }
+        .language-switcher button:hover {
+            background-color: var(--primary-dark);
+        }
+        .language-switcher button.active {
+            background-color: var(--secondary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 6px 20px var(--shadow-color);
+            overflow: hidden;
+        }
+
+        /* --- Chat History Area --- */
+        #chatHistory {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 400px;
+            background-color: #f7f9fa; /* Latar belakang chat */
+        }
+        .message {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            line-height: 1.4;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+            white-space: pre-wrap;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: var(--card-background);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 2px;
+        }
+        .ai-message p { margin: 0; }
+        .ai-message strong { color: var(--primary-dark); }
+        .ai-message em { font-style: italic; color: #888; }
+        .ai-message h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-color);
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 3px;
+        }
+
+
+        /* --- Input Area --- */
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        #chatForm {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #chatInput {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        #chatInput:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        /* --- Button Send --- */
+        .send-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .send-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        .send-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.8;
+            transform: none;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Info & Footer --- */
+        .initial-prompt {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-style: italic;
+            border-bottom: 1px dashed #eee;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--secondary-color);
+            font-size: 0.8em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            header {
+                margin-bottom: 10px;
+            }
+            .language-switcher {
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="language-switcher">
+                <button id="langEnBtn" class="active" data-lang="en">EN</button>
+                <button id="langIdBtn" data-lang="id">ID</button>
+            </div>
+            <h1 id="headerTitle">AI Market Chatbot 🤖</h1>
+            <p id="headerSubtitle" class="subtitle">Ask any question about financial markets: Crypto, Forex, Stocks, etc.</p>
+        </header>
+
+        <main>
+            <div id="chatHistory">
+                <div class="ai-message message">
+                    <p id="initialGreeting">Hello! I'm your AI Market Assistant. What would you like to know about the current market? For example, ask me about **Bitcoin's trend** or the **economic outlook for EUR/USD**.</p>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <form id="chatForm">
+                    <input type="text" id="chatInput" placeholder="Type your market question here..." required>
+                    <button type="submit" id="sendBtn" class="send-btn">
+                        <span id="buttonIcon">➤</span>
+                        <span id="loadingSpinner" class="loading-spinner" style="display: none;"></span>
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <footer>
+            <p id="footerText">&copy; 2025 AI Market Chatbot. All rights reserved. Disclaimer: AI suggestions are for informational purposes only and not financial advice.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const langEnBtn = document.getElementById('langEnBtn');
+            const langIdBtn = document.getElementById('langIdBtn');
+
+            const headerTitle = document.getElementById('headerTitle');
+            const headerSubtitle = document.getElementById('headerSubtitle');
+            const footerText = document.getElementById('footerText');
+            const initialGreeting = document.getElementById('initialGreeting');
+            const chatInput = document.getElementById('chatInput');
+            const chatForm = document.getElementById('chatForm');
+            const chatHistory = document.getElementById('chatHistory');
+            const sendBtn = document.getElementById('sendBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const buttonIcon = document.getElementById('buttonIcon');
+
+            let currentLang = localStorage.getItem('appLang') || 'en';
+
+            const translations = {
+                en: {
+                    headerTitle: "AI Market Chatbot 🤖",
+                    headerSubtitle: "Ask any question about financial markets: Crypto, Forex, Stocks, etc.",
+                    initialGreeting: "Hello! I'm your AI Market Assistant. What would you like to know about the current market? For example, ask me about **Bitcoin's trend** or the **economic outlook for EUR/USD**.",
+                    inputPlaceholder: "Type your market question here...",
+                    footerText: "&copy; 2025 AI Market Chatbot. All rights reserved. <em>Disclaimer: AI suggestions are for informational purposes only and not financial advice.</em>",
+                    msgServerError: "Sorry, I can't process your request right now. Server error.",
+                    msgLoading: "AI is thinking..."
+                },
+                id: {
+                    headerTitle: "Chatbot Pasar AI 🤖",
+                    headerSubtitle: "Tanyakan apa pun tentang pasar keuangan: Kripto, Forex, Saham, dll.",
+                    initialGreeting: "Halo! Saya Asisten Pasar AI Anda. Apa yang ingin Anda ketahui tentang pasar saat ini? Contohnya, tanyakan tentang **tren Bitcoin** atau **prospek ekonomi EUR/USD**.",
+                    inputPlaceholder: "Ketik pertanyaan pasar Anda di sini...",
+                    footerText: "&copy; 2025 Chatbot Pasar AI. Semua Hak Dilindungi. <em>Penafian: Saran AI hanya untuk tujuan informasi dan bukan saran keuangan.</em>",
+                    msgServerError: "Maaf, saya tidak dapat memproses permintaan Anda saat ini. Kesalahan server.",
+                    msgLoading: "AI sedang berpikir..."
+                }
+            };
+
+            function updateUI() {
+                const t = translations[currentLang];
+
+                headerTitle.innerHTML = t.headerTitle;
+                headerSubtitle.textContent = t.headerSubtitle;
+                footerText.innerHTML = t.footerText;
+                chatInput.placeholder = t.inputPlaceholder;
+                initialGreeting.innerHTML = t.initialGreeting.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Update greeting in current language
+
+                langEnBtn.classList.toggle('active', currentLang === 'en');
+                langIdBtn.classList.toggle('active', currentLang === 'id');
+            }
+
+            // Initial UI update
+            updateUI();
+
+            // Language Switcher Event Listeners
+            langEnBtn.addEventListener('click', () => {
+                currentLang = 'en';
+                localStorage.setItem('appLang', 'en');
+                updateUI();
+            });
+
+            langIdBtn.addEventListener('click', () => {
+                currentLang = 'id';
+                localStorage.setItem('appLang', 'id');
+                updateUI();
+            });
+
+            // --- Chat Submission Logic ---
+            chatForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const userMessageText = chatInput.value.trim();
+
+                if (userMessageText === '') return;
+
+                // 1. Tampilkan pesan pengguna
+                appendMessage(userMessageText, 'user-message');
+                chatInput.value = '';
+                scrollToBottom();
+
+                // 2. Tampilkan pesan loading AI (simulasi)
+                const loadingMessage = appendMessage(translations[currentLang].msgLoading, 'ai-message loading');
+                setLoadingState(true);
+                scrollToBottom();
+
+
+                // --- Simulasi Panggilan API Chatbot ---
+                try {
+                    // Di sini Anda akan memanggil API Chatbot (misalnya: /api/market-chat)
+                    // Karena kita tidak memiliki API backend, kita akan menggunakan timeout untuk simulasi
+                    const aiResponse = await simulateChatResponse(userMessageText, currentLang);
+                   
+                    // 3. Ganti pesan loading dengan respons AI
+                    loadingMessage.classList.remove('loading');
+                    loadingMessage.innerHTML = formatAiResponse(aiResponse);
+
+                } catch (error) {
+                    console.error('Chat error:', error);
+                    loadingMessage.classList.remove('loading');
+                    loadingMessage.innerHTML = `<p style="color: var(--error-color);">${translations[currentLang].msgServerError}</p>`;
+                } finally {
+                    setLoadingState(false);
+                    scrollToBottom();
+                }
+            });
+
+
+            // --- Helper Functions ---
+            function appendMessage(text, className) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `message ${className}`;
+                msgDiv.textContent = text;
+                chatHistory.appendChild(msgDiv);
+                return msgDiv;
+            }
+
+            function scrollToBottom() {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            function setLoadingState(isLoading) {
+                sendBtn.disabled = isLoading;
+                chatInput.disabled = isLoading;
+                buttonIcon.style.display = isLoading ? 'none' : 'inline';
+                loadingSpinner.style.display = isLoading ? 'inline-block' : 'none';
+            }
+
+            function formatAiResponse(responseText) {
+                // Mengganti baris baru dengan <br> dan markdown dasar (misal **bold**)
+                let formatted = responseText.replace(/\n/g, '<br>');
+                formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                return formatted;
+            }
+
+            async function simulateChatResponse(query, lang) {
+                // Simulasi penundaan API
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                const lowerQuery = query.toLowerCase();
+
+                if (lang === 'id') {
+                    if (lowerQuery.includes('bitcoin') || lowerQuery.includes('kripto')) {
+                        return "**Analisis Kripto:** Saat ini Bitcoin (BTC) menunjukkan momentum bullish yang kuat di jangka waktu harian, didukung oleh volume yang meningkat. Target resistensi terdekat berada di sekitar $68.000, dengan support psikologis di $62.500. Jaga Stop Loss Anda ketat, pasar kripto sangat volatil!";
+                    } else if (lowerQuery.includes('forex') || lowerQuery.includes('eur/usd')) {
+                        return "**Tinjauan Forex EUR/USD:** Pasangan ini diperkirakan akan melanjutkan konsolidasi menjelang data Inflasi AS minggu depan. Bias saat ini sedikit bearish karena penguatan Dolar AS. Level kunci: **Resistensi** di 1.0850, **Dukungan** di 1.0700.";
+                    } else if (lowerQuery.includes('emas') || lowerQuery.includes('komoditas')) {
+                        return "**Update Komoditas (Emas/Gold):** Emas (XAU/USD) bergerak sideways namun mempertahankan bias bullish karena ketidakpastian geopolitik. Jangka pendek, cari konfirmasi di atas $2,350 untuk kenaikan lebih lanjut. Ingat, Emas sering menjadi lindung nilai saat terjadi inflasi.";
+                    } else if (lowerQuery.includes('saham')) {
+                        return "**Analisis Saham Umum:** Indeks pasar global (seperti S&P 500) sebagian besar berada dalam tren naik, didorong oleh pendapatan teknologi yang kuat. Namun, investor disarankan untuk berhati-hati menjelang keputusan suku bunga bank sentral. **Sektor yang Kuat:** Teknologi, Kesehatan. **Sektor yang Lemah:** Real Estat.";
+                    } else {
+                        return "Saya adalah chatbot pasar. Saya bisa memberikan ringkasan tren dan level kunci untuk Kripto, Forex, Saham, dan Komoditas. Coba tanyakan: **'Bagaimana tren DXY?'** atau **'Prospek harga minyak hari ini?'**";
+                    }
+                } else {
+                    // English Responses
+                    if (lowerQuery.includes('bitcoin') || lowerQuery.includes('crypto')) {
+                        return "**Crypto Analysis:** Bitcoin (BTC) is currently showing strong bullish momentum on the daily timeframe, supported by increasing volume. The nearest resistance target is around $68,000, with psychological support at $62,500. Keep your Stop Loss tight, the crypto market is highly volatile!";
+                    } else if (lowerQuery.includes('forex') || lowerQuery.includes('eur/usd')) {
+                        return "**EUR/USD Forex Outlook:** The pair is expected to continue consolidation ahead of next week's US Inflation data. The current bias is slightly bearish due to US Dollar strengthening. Key levels: **Resistance** at 1.0850, **Support** at 1.0700.";
+                    } else if (lowerQuery.includes('gold') || lowerQuery.includes('commodity')) {
+                        return "**Commodity Update (Gold/XAU):** Gold (XAU/USD) is trading sideways but maintaining a bullish bias due to geopolitical uncertainty. Short-term, look for confirmation above $2,350 for further upside. Remember, Gold often acts as a hedge during inflation.";
+                    } else if (lowerQuery.includes('stock') || lowerQuery.includes('market')) {
+                        return "**General Stock Analysis:** Global market indices (like the S&P 500) are largely in an uptrend, driven by strong tech earnings. However, investors are advised to be cautious ahead of central bank interest rate decisions. **Strong Sectors:** Technology, Healthcare. **Weak Sectors:** Real Estate.";
+                    } else {
+                        return "I'm a market-focused chatbot. I can provide trend summaries and key levels for Crypto, Forex, Stocks, and Commodities. Try asking: **'What is the DXY trend?'** or **'Oil price outlook today?'**";
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
